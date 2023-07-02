@@ -25,7 +25,8 @@ public class DataClean {
     public static void main(String[] args) throws Exception{
         System.setProperty("HADOOP_USER_NAME", "bigdata");
         StreamExecutionEnvironment env = StreamExecutionEnvironment.getExecutionEnvironment();
-        env.setParallelism(3);// 假设 Kafka 的主题是 3 个分区
+        env.setParallelism(3);
+        // 假设 Kafka 的主题是 3 个分区
         // 设置 checkpoint
         env.enableCheckpointing(60000);
         env.getCheckpointConfig().setCheckpointingMode(CheckpointingMode.EXACTLY_ONCE);
@@ -56,7 +57,17 @@ public class DataClean {
 
         SingleOutputStreamOperator<String> etlDataStream = allData.connect(mapData).flatMap(new CoFlatMapFunction<String, HashMap<String, String>, String>() {
            // 其实不给也行。
-            HashMap<String, String> allMap = new HashMap<String, String>();
+            private  HashMap<String, String> allMap = new HashMap<String, String>();
+
+             {
+                allMap.put("US", "AREA_US");
+                allMap.put("TW", "AREA_CT");
+                allMap.put("HK", "AREA_CT");
+                allMap.put("PK", "AREA_AR");
+                allMap.put("KW", "AREA_AR");
+                allMap.put("SA", "AREA_AR");
+                allMap.put("IN", "AREA_IN");
+            }
 
             // 在这儿一开始，我们还是需要给 allmap 一些初始的数据。
 
@@ -98,7 +109,6 @@ public class DataClean {
         FlinkKafkaProducer<String> kafkaSink = new FlinkKafkaProducer<>(etltopic,
                 new SimpleStringSchema(),
                 sinkProperties);
-
 
         etlDataStream.addSink(kafkaSink);
 
